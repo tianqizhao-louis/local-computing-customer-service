@@ -10,6 +10,7 @@ app = FastAPI(openapi_url="/api/v1/customers/openapi.json", docs_url="/api/v1/cu
 origins = [
     "http://localhost",
     "http://localhost:3000",
+    "http://34.120.15.105",
 ]
 
 app.add_middleware(
