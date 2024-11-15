@@ -13,7 +13,7 @@ class CustomerIn(BaseModel):
 
 
 class CustomerOut(CustomerIn):
-    id: int
+    id: str
     links: Optional[List[Link]] = None
 
 
@@ -22,5 +22,5 @@ class CustomerUpdate(BaseModel):
     email: Optional[str] = None
 
 class CustomerListResponse(BaseModel):
-    customers: List[CustomerOut]
+    data: List[CustomerOut]
     links: Optional[List[Link]] = None

@@ -16,7 +16,7 @@ async def get_all_customers():
 
 async def get_customer(id):
     query = customers.select().where(customers.c.id == id)
-    return await database
+    return await database.fetch_one(query=query)
 
 
 async def update_customer(id: str, payload: CustomerIn):

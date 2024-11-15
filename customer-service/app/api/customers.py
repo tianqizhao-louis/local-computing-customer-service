@@ -36,8 +36,9 @@ async def create_customer(payload: CustomerIn, response: Response):
     )
 
     response_data = CustomerOut(
-        **payload.dict(),
         id=customer_id,
+        name=payload.name,
+        email=payload.email,
         links=[
             Link(rel="self", href=customer_url),
             Link(rel="collection", href=f"{URL_PREFIX}/customers/"),
@@ -46,18 +47,20 @@ async def create_customer(payload: CustomerIn, response: Response):
     return response_data
 
 
-@customers.get("/", response_model=List[CustomerOut])
+@customers.get("/", response_model=CustomerListResponse)
 async def get_customers():
-    db_records = db_manager.get_all_customers()
+    db_records = await db_manager.get_all_customers()
 
     customers = [
-        {
-            **db_record,
-            "links": [
-                {"rel": "self", "href": f"{URL_PREFIX}/customers/{db_record['id']}/"},
-                {"rel": "collection", "href": f"{URL_PREFIX}/customers/"},
+        CustomerOut(
+            id=db_record["id"],
+            name=db_record["name"],
+            email=db_record["email"],
+            links=[
+                Link(rel="self", href=generate_customer_url(db_record["id"])),
+                Link(rel="collection", href=f"{URL_PREFIX}/customers/"),
             ],
-        }
+        )
         for db_record in db_records
     ]
 
@@ -66,7 +69,10 @@ async def get_customers():
         Link(rel="collection", href=f"{URL_PREFIX}/customers/"),
     ]
 
-    return CustomerListResponse(customers=customers, links=links)
+    return CustomerListResponse(
+        data=customers,  # List of BreederOut instances
+        links=links,  # List of Link instances
+    )
 
 
 @customers.get("/{id}/", response_model=CustomerOut)
@@ -77,7 +83,9 @@ async def get_customer(id: str):
         raise HTTPException(status_code=404, detail="Customer not found")
 
     response_data = CustomerOut(
-        **customer,
+        id=customer["id"],
+        name=customer["name"],
+        email=customer["email"],
         links=[
             Link(rel="self", href=generate_customer_url(id)),
             Link(rel="collection", href=f"{URL_PREFIX}/customers/"),
@@ -101,7 +109,9 @@ async def update_customer(id: str, payload: CustomerUpdate):
     updated_customer_in_db = await db_manager.get_customer(id)
 
     response_data = CustomerOut(
-        **updated_customer_in_db,
+        id=updated_customer_in_db["id"],
+        name=updated_customer_in_db["name"],
+        email=updated_customer_in_db["email"],
         links=[
             Link(rel="self", href=generate_customer_url(id)),
             Link(rel="collection", href=f"{URL_PREFIX}/customers/"),
