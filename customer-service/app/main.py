@@ -1,33 +1,39 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.customers import customers
-from app.api.db import metadata, database, engine
+from app.api.db import metadata, database, engine, initialize_database, cleanup
+from app.api.middleware import LoggingMiddleware
+from contextlib import asynccontextmanager
 
-metadata.create_all(engine)
 
-app = FastAPI(openapi_url="/api/v1/customers/openapi.json", docs_url="/api/v1/customers/docs")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code: connect to the database
+    await initialize_database()
+    yield
+    # Shutdown code: disconnect from the database
+    await cleanup()
+
+
+app = FastAPI(
+    openapi_url="/api/v1/customers/openapi.json",
+    docs_url="/api/v1/customers/docs",
+    lifespan=lifespan,  # Use lifespan event handler
+)
 
 origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://34.120.15.105",
+    "*",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-async def startup():
-    await database.connect()
 
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
+app.add_middleware(LoggingMiddleware)
 
-
-app.include_router(customers, prefix='/api/v1/customers', tags=['customers'])
+app.include_router(customers, prefix="/api/v1/customers", tags=["customers"])

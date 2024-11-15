@@ -1,16 +1,26 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
+
+class Link(BaseModel):
+    rel: str
+    href: str
+
+
 class CustomerIn(BaseModel):
     name: str
+    email: str
 
 
 class CustomerOut(CustomerIn):
     id: int
+    links: Optional[List[Link]] = None
 
 
-# class MovieUpdate(MovieIn):
-#     name: Optional[str] = None
-#     plot: Optional[str] = None
-#     genres: Optional[List[str]] = None
-#     casts_id: Optional[List[int]] = None
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+
+class CustomerListResponse(BaseModel):
+    customers: List[CustomerOut]
+    links: Optional[List[Link]] = None
