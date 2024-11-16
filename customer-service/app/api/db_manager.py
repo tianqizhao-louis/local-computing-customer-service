@@ -34,3 +34,11 @@ async def delete_customer(id: str):
 async def delete_all_customers():
     query = customers.delete()
     return await database.execute(query=query)
+
+
+# Non-CRUD operations
+
+
+async def get_customer_by_email(email: str):
+    query = customers.select().where(customers.c.email == email)
+    return await database.fetch_one(query=query)

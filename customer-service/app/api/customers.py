@@ -144,3 +144,25 @@ async def delete_all_customers():
 
 def generate_customer_url(customer_id: str):
     return f"{URL_PREFIX}/customers/{customer_id}/"
+
+
+# Non-CRUD operations
+
+
+@customers.get("/email/{email}/", response_model=CustomerOut, status_code=200)
+async def get_customer_by_email(email: str):
+    customer = await db_manager.get_customer_by_email(email)
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    response_data = CustomerOut(
+        id=customer["id"],
+        name=customer["name"],
+        email=customer["email"],
+        links=[
+            Link(rel="self", href=generate_customer_url(customer["id"])),
+            Link(rel="collection", href=f"{URL_PREFIX}/customers/"),
+        ],
+    )
+    return response_data
