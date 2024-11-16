@@ -14,11 +14,25 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from databases import Database
 
-DATABASE_URI = os.getenv("DATABASE_URI")
+# Get environment variables
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
+INSTANCE_UNIX_SOCKET = os.getenv("INSTANCE_UNIX_SOCKET")
+INSTANCE_CONNECTION_NAME = os.getenv("INSTANCE_CONNECTION_NAME")
 
-# Convert SQLAlchemy URI to async format if needed
-if DATABASE_URI.startswith("postgresql://"):
-    DATABASE_URI = DATABASE_URI.replace("postgresql://", "postgresql+asyncpg://")
+# Construct the DATABASE_URI based on environment
+if INSTANCE_UNIX_SOCKET:
+    # Production: Use Unix Domain Socket
+    DATABASE_URI = (
+        f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@/{DB_NAME}"
+        f"?host={INSTANCE_UNIX_SOCKET}"
+    )
+else:
+    # Development: Use regular connection string
+    DATABASE_URI = os.getenv("DATABASE_URI")
+    if DATABASE_URI and DATABASE_URI.startswith("postgresql://"):
+        DATABASE_URI = DATABASE_URI.replace("postgresql://", "postgresql+asyncpg://")
 
 # Create async engine with unique prepared statement names
 engine = create_async_engine(
