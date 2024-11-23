@@ -8,7 +8,7 @@ from sqlalchemy import (
     MetaData,
     String,
     Table,
-    ARRAY,
+    ForeignKey
 )
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -46,12 +46,23 @@ engine = create_async_engine(
 
 metadata = MetaData()
 
+# Define customers table
 customers = Table(
     "customers",
     metadata,
     Column("id", String(36), primary_key=True),
     Column("name", String(50)),
     Column("email", String(100)),
+)
+
+# Define waitlist table
+waitlist = Table(
+    "waitlist",
+    metadata,
+    Column("id", String(36), primary_key=True, default=str(uuid.uuid4())),
+    Column("consumer_id", String(36), ForeignKey("customers.id"), nullable=False),
+    Column("pet_id", String(36), nullable=False),
+    Column("breeder_id", String(36), nullable=False),
 )
 
 # Setup databases instance with the same connection parameters
@@ -64,7 +75,6 @@ database = Database(
     statement_cache_size=0,
 )
 
-
 # Create tables asynchronously
 async def create_tables():
     async with engine.begin() as conn:
@@ -76,12 +86,10 @@ async def create_tables():
             await conn.run_sync(metadata.drop_all)
             await conn.run_sync(metadata.create_all)
 
-
 # Database setup function
 async def setup_database():
     await database.connect()
     await create_tables()
-
 
 # Function to initialize database (call this in your startup event)
 async def initialize_database():
@@ -92,11 +100,9 @@ async def initialize_database():
         print(f"Error initializing database: {e}")
         raise
 
-
 # Cleanup function (call this in your shutdown event)
 async def cleanup():
     await database.disconnect()
-
 
 # If you need to create tables from command line
 if __name__ == "__main__":
