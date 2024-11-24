@@ -193,3 +193,32 @@ async def get_customer_waitlist(customer_id: str):
 # Helper function to generate customer URL
 def generate_customer_url(customer_id: str):
     return f"{URL_PREFIX}/customers/{customer_id}/"
+
+@customers.get("/breeder/{breeder_id}/waitlist", response_model=List[dict])
+async def get_waitlist_for_breeder(breeder_id: str):
+    # Verify the breeder exists in the waitlist table
+    breeder_exists = await db_manager.verify_breeder_exists(breeder_id)
+    if not breeder_exists:
+        return [{"message": "Breeder not found in the waitlist"}]
+    
+    # Retrieve all waitlist entries for the specific breeder
+    waitlist_entries = await db_manager.get_waitlist_for_breeder(breeder_id)
+    
+    # Prepare the response data
+    customers_data = []
+    for entry in waitlist_entries:
+        customer = await db_manager.get_customer(entry["consumer_id"])
+        if customer:
+            customers_data.append({
+                "id": customer["id"],
+                "name": customer["name"],
+                "email": customer["email"],
+                "pet_id": entry["pet_id"]
+            })
+    
+    if not customers_data:
+        return [{"message": "No waitlist entries found for this breeder"}]
+
+    return customers_data
+
+

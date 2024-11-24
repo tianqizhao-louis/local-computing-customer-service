@@ -74,3 +74,14 @@ async def remove_from_waitlist(waitlist_entry_id: str):
 async def get_waitlist_entry(waitlist_entry_id: str):
     query = waitlist.select().where(waitlist.c.id == waitlist_entry_id)
     return await database.fetch_one(query)
+
+# Get all waitlist entries for a specific breeder
+async def get_waitlist_for_breeder(breeder_id: str):
+    query = waitlist.select().where(waitlist.c.breeder_id == breeder_id)
+    return await database.fetch_all(query)
+
+# Verify the breeder exists in the waitlist table
+async def verify_breeder_exists(breeder_id: str) -> bool:
+    query = waitlist.select().where(waitlist.c.breeder_id == breeder_id).limit(1)
+    result = await database.fetch_one(query)
+    return result is not None
