@@ -13,6 +13,9 @@ from app.api.models import (
 )
 from app.api import db_manager
 
+import httpx
+from pydantic import BaseModel
+
 customers = APIRouter()
 URL_PREFIX = os.getenv("URL_PREFIX")
 
@@ -176,6 +179,46 @@ async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn):
         breeder_id=payload.breeder_id,
     )
     return response_data
+
+# Revise: Add a pet to the waitlist; send a webhook to the composite server
+customers = APIRouter()
+COMPOSITE_SERVER_WEBHOOK_URL = "http://localhost:8004/api/v1/composites/webhook"
+
+@customers.post("/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201)
+async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn):
+    # Verify the customer exists
+    customer = await db_manager.get_customer(customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Add pet to the waitlist
+    waitlist_entry_id = str(uuid.uuid4())
+    await db_manager.add_to_waitlist(customer_id, payload.pet_id, payload.breeder_id, waitlist_entry_id)
+
+    # Notify composite server
+    webhook_payload = {
+        "event": "user_joined_waitlist",
+        "consumer_id": customer_id,
+        "pet_id": payload.pet_id,
+        "breeder_id": payload.breeder_id,
+        "waitlist_entry_id": waitlist_entry_id
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(COMPOSITE_SERVER_WEBHOOK_URL, json=webhook_payload)
+            response.raise_for_status()
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"Error notifying composite server: {str(e)}")
+
+    # Return response
+    response_data = WaitlistEntryOut(
+        id=waitlist_entry_id,
+        consumer_id=customer_id,
+        pet_id=payload.pet_id,
+        breeder_id=payload.breeder_id,
+    )
+    return response_data
+
 
 # Get the customer's waitlist
 @customers.get("/{customer_id}/waitlist", response_model=List[WaitlistEntryOut])
