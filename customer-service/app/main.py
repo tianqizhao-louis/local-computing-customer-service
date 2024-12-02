@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.customers import customers
 from app.api.db import metadata, database, engine, initialize_database, cleanup
-from app.api.middleware import LoggingMiddleware
+from app.api.middleware import LoggingMiddleware, JWTMiddleware
 from contextlib import asynccontextmanager
+from app.api.auth import auth
 
 
 @asynccontextmanager
@@ -35,5 +36,15 @@ app.add_middleware(
 
 
 app.add_middleware(LoggingMiddleware)
+app.add_middleware(
+    JWTMiddleware,
+    excluded_paths=[
+        "/api/v1/auth",
+        "/api/v1/customers/openapi.json",
+        "/api/v1/customers/docs",
+        "/api/v1/customers/get/get",
+    ],
+)
 
 app.include_router(customers, prefix="/api/v1/customers", tags=["customers"])
+app.include_router(auth, prefix="/api/v1/auth", tags=["auth"])

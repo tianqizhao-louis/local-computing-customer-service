@@ -1,15 +1,7 @@
 import os
 import uuid
 import asyncio
-from sqlalchemy import (
-    Column,
-    DateTime,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    ForeignKey
-)
+from sqlalchemy import Column, DateTime, Integer, MetaData, String, Table, ForeignKey
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from databases import Database
@@ -75,6 +67,7 @@ database = Database(
     statement_cache_size=0,
 )
 
+
 # Create tables asynchronously
 async def create_tables():
     async with engine.begin() as conn:
@@ -86,10 +79,12 @@ async def create_tables():
             await conn.run_sync(metadata.drop_all)
             await conn.run_sync(metadata.create_all)
 
+
 # Database setup function
 async def setup_database():
     await database.connect()
     await create_tables()
+
 
 # Function to initialize database (call this in your startup event)
 async def initialize_database():
@@ -100,9 +95,11 @@ async def initialize_database():
         print(f"Error initializing database: {e}")
         raise
 
+
 # Cleanup function (call this in your shutdown event)
 async def cleanup():
     await database.disconnect()
+
 
 # If you need to create tables from command line
 if __name__ == "__main__":
