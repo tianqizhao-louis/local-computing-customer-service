@@ -13,6 +13,11 @@ from app.api.models import (
 )
 from app.api import db_manager
 
+import httpx
+from pydantic import BaseModel
+
+import json
+
 customers = APIRouter()
 URL_PREFIX = os.getenv("URL_PREFIX")
 
@@ -185,11 +190,33 @@ async def get_customer_by_email(email: str):
 
 # Waitlist Management
 
+# # Add a pet to the waitlist
+# @customers.post("/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201)
+# async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn):
+#     # Verify the customer exists
+#     customer = await db_manager.get_customer(customer_id)
+#     if not customer:
+#         raise HTTPException(status_code=404, detail="Customer not found")
+    
+#     # Add pet to the waitlist
+#     waitlist_entry_id = str(uuid.uuid4())
+#     await db_manager.add_to_waitlist(customer_id, payload.pet_id, payload.breeder_id, waitlist_entry_id)
 
-# Add a pet to the waitlist
-@customers.post(
-    "/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201
-)
+#     response_data = WaitlistEntryOut(
+#         id=waitlist_entry_id,
+#         consumer_id=customer_id,
+#         pet_id=payload.pet_id,
+#         breeder_id=payload.breeder_id,
+#     )
+#     return response_data
+
+# Revise: Add a pet to the waitlist; send a webhook to the composite server
+# customers = APIRouter()
+
+COMPOSITE_SERVER_WEBHOOK_URL = "http://host.docker.internal:8004/api/v1/composites/webhook"
+
+@customers.post("/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201)
+
 async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn):
     # Verify the customer exists
     customer = await db_manager.get_customer(customer_id)
@@ -202,6 +229,29 @@ async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn):
         customer_id, payload.pet_id, payload.breeder_id, waitlist_entry_id
     )
 
+    # Notify composite server
+    webhook_payload = {
+        "event": "user_joined_waitlist",
+        "consumer_id": customer_id,
+        "pet_id": payload.pet_id,
+        "breeder_id": payload.breeder_id,
+        "waitlist_entry_id": waitlist_entry_id
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            headers = {
+                "Content-Type": "application/json",  # Explicitly specify content type
+            }
+            response = await client.post(
+                COMPOSITE_SERVER_WEBHOOK_URL,
+                json=webhook_payload,  # Let httpx handle JSON serialization
+                headers=headers
+            )
+            response.raise_for_status()  # Raise exception for HTTP errors
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"Error notifying composite server: {str(e)}")
+
+    # Return response
     response_data = WaitlistEntryOut(
         id=waitlist_entry_id,
         consumer_id=customer_id,
