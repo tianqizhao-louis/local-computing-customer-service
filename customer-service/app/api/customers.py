@@ -21,6 +21,7 @@ import json
 customers = APIRouter()
 URL_PREFIX = os.getenv("URL_PREFIX")
 
+
 # Create a new customer
 @customers.post("/", response_model=CustomerOut, status_code=201)
 async def create_customer(payload: CustomerIn, response: Response):
@@ -43,6 +44,7 @@ async def create_customer(payload: CustomerIn, response: Response):
         ],
     )
     return response_data
+
 
 # Get all customers
 @customers.get("/", response_model=CustomerListResponse)
@@ -72,6 +74,7 @@ async def get_customers():
         links=links,  # List of Link instances
     )
 
+
 # Get a specific customer by ID
 @customers.get("/{id}/", response_model=CustomerOut)
 async def get_customer(id: str):
@@ -90,6 +93,26 @@ async def get_customer(id: str):
         ],
     )
     return response_data
+
+
+@customers.get("/get/get/{id}/", response_model=CustomerOut)
+async def get_customer_get_id(id: str):
+    customer = await db_manager.get_customer(id)
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    response_data = CustomerOut(
+        id=customer["id"],
+        name=customer["name"],
+        email=customer["email"],
+        links=[
+            Link(rel="self", href=generate_customer_url(id)),
+            Link(rel="collection", href=f"{URL_PREFIX}/customers/"),
+        ],
+    )
+    return response_data
+
 
 # Update customer details
 @customers.put("/{id}/", response_model=CustomerOut)
@@ -118,6 +141,7 @@ async def update_customer(id: str, payload: CustomerUpdate):
 
     return response_data
 
+
 # Delete a customer
 @customers.delete("/{id}/", response_model=None)
 async def delete_customer(id: str):
@@ -127,6 +151,7 @@ async def delete_customer(id: str):
         raise HTTPException(status_code=404, detail="Customer not found")
 
     await db_manager.delete_customer(id)
+
 
 # Delete all customers
 @customers.delete("/delete/all/", response_model=None)
@@ -139,7 +164,9 @@ async def delete_all_customers():
             status_code=500, detail=f"Failed to delete all customers: {str(e)}"
         )
 
+
 # Non-CRUD operations
+
 
 # Get a customer by email
 @customers.get("/email/{email}/", response_model=CustomerOut, status_code=200)
@@ -159,6 +186,7 @@ async def get_customer_by_email(email: str):
         ],
     )
     return response_data
+
 
 # Waitlist Management
 
@@ -188,15 +216,18 @@ async def get_customer_by_email(email: str):
 COMPOSITE_SERVER_WEBHOOK_URL = "http://host.docker.internal:8004/api/v1/composites/webhook"
 
 @customers.post("/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201)
+
 async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn):
     # Verify the customer exists
     customer = await db_manager.get_customer(customer_id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    
+
     # Add pet to the waitlist
     waitlist_entry_id = str(uuid.uuid4())
-    await db_manager.add_to_waitlist(customer_id, payload.pet_id, payload.breeder_id, waitlist_entry_id)
+    await db_manager.add_to_waitlist(
+        customer_id, payload.pet_id, payload.breeder_id, waitlist_entry_id
+    )
 
     # Notify composite server
     webhook_payload = {
@@ -237,15 +268,17 @@ async def get_customer_waitlist(customer_id: str):
     customer = await db_manager.get_customer(customer_id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    
+
     # Retrieve waitlist
     waitlist_entries = await db_manager.get_waitlist_for_customer(customer_id)
 
     return [WaitlistEntryOut(**entry) for entry in waitlist_entries]
 
+
 # Helper function to generate customer URL
 def generate_customer_url(customer_id: str):
     return f"{URL_PREFIX}/customers/{customer_id}/"
+
 
 @customers.get("/breeder/{breeder_id}/waitlist", response_model=List[dict])
 async def get_waitlist_for_breeder(breeder_id: str):
@@ -253,25 +286,39 @@ async def get_waitlist_for_breeder(breeder_id: str):
     breeder_exists = await db_manager.verify_breeder_exists(breeder_id)
     if not breeder_exists:
         return [{"message": "Breeder not found in the waitlist"}]
-    
+
     # Retrieve all waitlist entries for the specific breeder
     waitlist_entries = await db_manager.get_waitlist_for_breeder(breeder_id)
-    
+
     # Prepare the response data
     customers_data = []
     for entry in waitlist_entries:
         customer = await db_manager.get_customer(entry["consumer_id"])
         if customer:
-            customers_data.append({
-                "id": customer["id"],
-                "name": customer["name"],
-                "email": customer["email"],
-                "pet_id": entry["pet_id"]
-            })
-    
+            customers_data.append(
+                {
+                    "id": customer["id"],
+                    "name": customer["name"],
+                    "email": customer["email"],
+                    "pet_id": entry["pet_id"],
+                }
+            )
+
     if not customers_data:
         return [{"message": "No waitlist entries found for this breeder"}]
 
     return customers_data
 
 
+@customers.delete(
+    "/waitlist/{waitlist_entry_id}/", response_model=None, status_code=200
+)
+async def remove_from_waitlist(waitlist_entry_id: str):
+    # Verify the waitlist entry exists
+    waitlist_entry = await db_manager.get_waitlist_entry(waitlist_entry_id)
+    if not waitlist_entry:
+        raise HTTPException(status_code=404, detail="Waitlist entry not found")
+
+    # Remove the waitlist entry
+    await db_manager.remove_from_waitlist(waitlist_entry_id)
+    return None

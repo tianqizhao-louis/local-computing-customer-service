@@ -10,6 +10,9 @@ services:
       - DATABASE_URI=${DATABASE_URI}
       - PYTHONPATH=/app
       - URL_PREFIX=http://localhost:8081/api/v1
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/
     depends_on:
       - customer_db
