@@ -15,9 +15,9 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_ALGORITHM=${JWT_ALGORITHM}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-      - DB_USER = ${DB_USER}
-      - DB_PASS = ${DB_PASS}
-      - DB_NAME = ${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
 
   nginx:
     image: nginx:latest
