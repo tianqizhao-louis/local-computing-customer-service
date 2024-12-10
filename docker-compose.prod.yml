@@ -15,17 +15,11 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_ALGORITHM=${JWT_ALGORITHM}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - DB_USER = ${DB_USER}
+      - DB_PASS = ${DB_PASS}
+      - DB_NAME = ${DB_NAME}
     depends_on:
       - customer_db
-
-  customer_db:
-    image: postgres:12.1-alpine
-    volumes:
-      - postgres_data_customer:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
-      - POSTGRES_DB=${DB_NAME}
 
   nginx:
     image: nginx:latest
