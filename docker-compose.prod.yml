@@ -9,6 +9,7 @@ services:
     ports:
       - "8001:8000"
     environment:
+      - DEP_DATABASE_URI=${DEP_DATABASE_URI}
       - DATABASE_URI=${DATABASE_URI}
       - PYTHONPATH=/app
       - URL_PREFIX=${URL_PREFIX}
