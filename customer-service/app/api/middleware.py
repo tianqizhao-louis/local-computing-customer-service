@@ -53,7 +53,12 @@ class JWTMiddleware(BaseHTTPMiddleware):
         self.excluded_paths = excluded_paths or []
 
     async def dispatch(self, request: Request, call_next):
-        # Exclude paths from middleware
+        # Allow preflight OPTIONS requests to bypass authentication
+        if request.method == "OPTIONS":
+            response = await call_next(request)
+            return response
+
+        # Exclude specific paths from authentication
         if any(request.url.path.startswith(path) for path in self.excluded_paths):
             return await call_next(request)
 
