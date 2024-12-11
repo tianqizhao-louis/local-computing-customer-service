@@ -199,7 +199,9 @@ async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn, request: R
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    logger.info(f"[URL] Webhook URL: {settings.COMPOSITE_SERVER_WEBHOOK_URL}")
+    logger.info(
+        f"[URL] {settings.DEBUG} Webhook URL: {settings.COMPOSITE_SERVER_WEBHOOK_URL}"
+    )
 
     # Add pet to the waitlist
     waitlist_entry_id = str(uuid.uuid4())
