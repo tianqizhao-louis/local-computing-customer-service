@@ -22,7 +22,7 @@ class Settings(BaseSettings):
             "https://composite-661348528801.us-central1.run.app/api/v1/composites/webhook/",
             env="COMPOSITE_SERVER_WEBHOOK_URL",
         )
-        if not DEBUG
+        if DEBUG
         else Field(
             "http://host.docker.internal:8004/api/v1/composites/webhook",
             env="COMPOSITE_SERVER_WEBHOOK_URL",
