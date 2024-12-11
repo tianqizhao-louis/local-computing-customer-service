@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     COMPOSITE_SERVER_WEBHOOK_URL: str = (
         Field(
-            "https://composite-661348528801.us-central1.run.app/api/v1/composites/webhook/",
+            "https://composite-661348528801.us-central1.run.app/api/v1/composites/webhook",
             env="COMPOSITE_SERVER_WEBHOOK_URL",
         )
         if DEBUG
