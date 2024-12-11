@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         )
     else:
         COMPOSITE_SERVER_WEBHOOK_URL: str = Field(
-            "https://composite-661348528801.us-central1.run.app/api/v1/composites/webhook"
+            "https://composite-661348528801.us-central1.run.app/api/v1/composites/webhook/"
         )
 
     # PET_SERVICE_URL: str = Field(os.getenv("PET_SERVICE_URL"), env="PET_SERVICE_URL")
