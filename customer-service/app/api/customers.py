@@ -310,3 +310,14 @@ async def remove_from_waitlist(waitlist_entry_id: str):
     # Remove the waitlist entry
     await db_manager.remove_from_waitlist(waitlist_entry_id)
     return None
+
+
+@customers.delete("/waitlist/delete/all/", response_model=None)
+async def delete_all_waitlist_entries():
+    try:
+        await db_manager.delete_all_waitlist_entries()
+        return {"message": "All waitlist entries have been deleted."}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete all waitlist entries: {str(e)}"
+        )
