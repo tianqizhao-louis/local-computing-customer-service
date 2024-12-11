@@ -15,6 +15,7 @@ from app.api import db_manager
 
 import httpx
 from pydantic import BaseModel
+from app.config import settings
 
 import json
 
@@ -187,7 +188,7 @@ async def get_customer_by_email(email: str):
     )
     return response_data
 
-COMPOSITE_SERVER_WEBHOOK_URL = "http://host.docker.internal:8004/api/v1/composites/webhook"
+COMPOSITE_SERVER_WEBHOOK_URL = settings.COMPOSITE_SERVER_WEBHOOK_URL
 
 @customers.post("/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201)
 async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn, request: Request):
