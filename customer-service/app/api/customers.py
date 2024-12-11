@@ -16,6 +16,7 @@ from app.api import db_manager
 import httpx
 from pydantic import BaseModel
 from app.config import settings
+from app.api.middleware import logger
 
 import json
 
@@ -188,14 +189,20 @@ async def get_customer_by_email(email: str):
     )
     return response_data
 
+
 COMPOSITE_SERVER_WEBHOOK_URL = settings.COMPOSITE_SERVER_WEBHOOK_URL
 
-@customers.post("/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201)
+
+@customers.post(
+    "/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201
+)
 async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn, request: Request):
     # Verify the customer exists
     customer = await db_manager.get_customer(customer_id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
+
+    logger.info(f"[URL] Webhook URL: {COMPOSITE_SERVER_WEBHOOK_URL}")
 
     # Add pet to the waitlist
     waitlist_entry_id = str(uuid.uuid4())
@@ -209,7 +216,7 @@ async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn, request: R
         "consumer_id": customer_id,
         "pet_id": payload.pet_id,
         "breeder_id": payload.breeder_id,
-        "waitlist_entry_id": waitlist_entry_id
+        "waitlist_entry_id": waitlist_entry_id,
     }
 
     auth_header = request.headers.get("Authorization")
@@ -221,15 +228,17 @@ async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn, request: R
             }
             if auth_header:
                 headers["Authorization"] = auth_header  # Pass the auth header
-                
+
             response = await client.post(
                 COMPOSITE_SERVER_WEBHOOK_URL,
                 json=webhook_payload,  # Let httpx handle JSON serialization
-                headers=headers
+                headers=headers,
             )
             response.raise_for_status()  # Raise exception for HTTP errors
         except httpx.RequestError as e:
-            raise HTTPException(status_code=500, detail=f"Error notifying composite server: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Error notifying composite server: {str(e)}"
+            )
 
     # Return response
     response_data = WaitlistEntryOut(
