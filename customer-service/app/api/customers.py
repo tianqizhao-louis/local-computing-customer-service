@@ -190,9 +190,6 @@ async def get_customer_by_email(email: str):
     return response_data
 
 
-COMPOSITE_SERVER_WEBHOOK_URL = settings.COMPOSITE_SERVER_WEBHOOK_URL
-
-
 @customers.post(
     "/{customer_id}/waitlist", response_model=WaitlistEntryOut, status_code=201
 )
@@ -202,7 +199,7 @@ async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn, request: R
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    logger.info(f"[URL] Webhook URL: {COMPOSITE_SERVER_WEBHOOK_URL}")
+    logger.info(f"[URL] Webhook URL: {settings.COMPOSITE_SERVER_WEBHOOK_URL}")
 
     # Add pet to the waitlist
     waitlist_entry_id = str(uuid.uuid4())
@@ -230,7 +227,7 @@ async def add_to_waitlist(customer_id: str, payload: WaitlistEntryIn, request: R
                 headers["Authorization"] = auth_header  # Pass the auth header
 
             response = await client.post(
-                COMPOSITE_SERVER_WEBHOOK_URL,
+                settings.COMPOSITE_SERVER_WEBHOOK_URL,
                 json=webhook_payload,  # Let httpx handle JSON serialization
                 headers=headers,
             )
