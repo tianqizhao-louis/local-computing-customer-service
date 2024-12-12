@@ -1,0 +1,30 @@
+services:
+  customer_service:
+    build: ./customer-service
+    command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app -b 0.0.0.0:8000
+    volumes:
+      - ./customer-service/:/app/
+    ports:
+      - "8001:8000"
+    environment:
+      - DEP_DATABASE_URI=${DEP_DATABASE_URI}
+      - DATABASE_URI=${DATABASE_URI}
+      - PYTHONPATH=/app
+      - URL_PREFIX=${URL_PREFIX}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - FASTAPI_ENV=production
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - COMPOSITE_SERVER_WEBHOOK_URL=https://composite-661348528801.us-central1.run.app/api/v1/composites/webhook
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./nginx_config.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - customer_service
