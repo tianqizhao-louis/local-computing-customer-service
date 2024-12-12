@@ -17,16 +17,8 @@ class Settings(BaseSettings):
         os.getenv("JWT_REFRESH_SECRET"), env="JWT_REFRESH_SECRET"
     )
 
-    COMPOSITE_SERVER_WEBHOOK_URL: str = (
-        Field(
-            "https://composite-661348528801.us-central1.run.app/api/v1/composites/webhook",
-            env="COMPOSITE_SERVER_WEBHOOK_URL",
-        )
-        if DEBUG
-        else Field(
-            "http://host.docker.internal:8004/api/v1/composites/webhook",
-            env="COMPOSITE_SERVER_WEBHOOK_URL",
-        )
+    COMPOSITE_SERVER_WEBHOOK_URL: str = Field(
+        os.getenv("COMPOSITE_SERVER_WEBHOOK_URL"), env="COMPOSITE_SERVER_WEBHOOK_URL"
     )
 
     # if DEBUG:

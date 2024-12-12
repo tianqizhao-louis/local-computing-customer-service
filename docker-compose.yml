@@ -13,6 +13,7 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_ALGORITHM=${JWT_ALGORITHM}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - COMPOSITE_SERVER_WEBHOOK_URL=http://host.docker.internal:8004/api/v1/composites/webhook
       # - CAST_SERVICE_HOST_URL=http://cast_service:8000/api/v1/casts/
     depends_on:
       - customer_db

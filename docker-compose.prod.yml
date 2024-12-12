@@ -18,6 +18,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - DB_NAME=${DB_NAME}
+      - COMPOSITE_SERVER_WEBHOOK_URL=https://composite-661348528801.us-central1.run.app/api/v1/composites/webhook
 
   nginx:
     image: nginx:latest
